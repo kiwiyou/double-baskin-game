@@ -1,10 +1,10 @@
-import { BrowserRouter as Router, Switch, Route } from 'react-router-dom'
-import { GamePage, JoinPage, MatchPage, WelcomePage } from './pages'
 import { injectGlobal } from '@emotion/css'
+import { User } from './common/User'
+import { WelcomePage } from './welcome/WelcomePage'
+import { GamePage } from './game/GamePage'
+import { useState } from 'react'
 
 injectGlobal`
-  @import url('https://cdn.jsdelivr.net/gh/naen-nae/fonts/build/css/esamanru.css');
-
   body {
     background-color: black;
     color: #bbb;
@@ -26,24 +26,12 @@ injectGlobal`
 `
 
 const App = () => {
-  return (
-    <Router>
-      <Switch>
-        <Route path="/game">
-          <GamePage />
-        </Route>
-        <Route path="/match">
-          <MatchPage />
-        </Route>
-        <Route path="/join">
-          <JoinPage />
-        </Route>
-        <Route path="/">
-          <WelcomePage />
-        </Route>
-      </Switch>
-    </Router>
-  )
+  const [user, setUser] = useState<User | undefined>(undefined)
+  if (user === undefined) {
+    return <WelcomePage onUserCreate={setUser} />
+  } else {
+    return <GamePage user={user} />
+  }
 }
 
 export default App

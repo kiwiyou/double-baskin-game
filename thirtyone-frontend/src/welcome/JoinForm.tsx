@@ -1,6 +1,9 @@
 import { useState, UIEvent } from 'react'
-import { useHistory } from 'react-router-dom'
 import { User } from '../common/User'
+
+export interface JoinFormProps {
+  onUserCreate?: (user: User) => void
+}
 
 enum NicknameError {
   Empty,
@@ -14,16 +17,17 @@ const NicknameErrorMsg = {
   [NicknameError.TooLong]: `별명은 ${MAX_NICKNAME_LEN}자를 넘을 수 없습니다.`,
 }
 
-export const JoinPage = () => {
+export const JoinForm = ({ onUserCreate }: JoinFormProps) => {
   const [nickname, setNickname] = useState('')
   const [nickError, setNickError] = useState<NicknameError | undefined>()
-  const history = useHistory<User>()
 
   const onConfirm = (e: UIEvent) => {
     e.preventDefault()
     const result = filterNickname(nickname)
     if (typeof result === 'string') {
-      history.push('/match', { nickname })
+      if (onUserCreate) {
+        onUserCreate({ nickname: result })
+      }
     } else {
       setNickError(result)
     }
