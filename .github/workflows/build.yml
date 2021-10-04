@@ -4,24 +4,17 @@ on:
   push:
     branches: [main]
 
-
 jobs:
   backend-aarch64:
     name: Backend linux aarch64
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
-          target: aarch64-unknown-linux-gnu
-          args: --manifest-path thirtyone-backend/Cargo.toml
-          override: true
-      - uses: actions-rs/cargo@v1
-        with:
-          use-cross: true
-          command: build
-          args: --target aarch64-unknown-linux-gnu --manifest-path thirtyone-backend/Cargo.toml
+      - name: Install cross
+        run: cargo install cross
+      - name: Build
+        working-directory: ./thirtyone-backend
+        run: cross build --target aarch64-unknown-linux-gnu
   frontend:
     name: Frontend
     runs-on: ubuntu-latest
