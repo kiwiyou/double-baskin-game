@@ -9,7 +9,9 @@ export interface GamePageProps {
 }
 
 export const GamePage = ({ user }: GamePageProps) => {
-  const [state, send] = useMachine(gameMachine, { context: { user } })
+  const [state, send] = useMachine(gameMachine, {
+    context: { user, host: `wss://${window.location.host}/server` },
+  })
 
   switch (true) {
     case state.matches('idle'):

@@ -12,10 +12,12 @@ use tokio::sync::mpsc::unbounded_channel;
 async fn main() {
     pretty_env_logger::init();
 
+    let bind_addr = std::env::var("BIND_ADDR").unwrap();
+
     let (matcher_tx, matcher_rx) = unbounded_channel();
     tokio::spawn(matcher::listen(matcher_rx));
 
-    let listener = TcpListener::bind("0.0.0.0:8080").await.unwrap();
+    let listener = TcpListener::bind(&bind_addr).await.unwrap();
     info!("server listening on {}", listener.local_addr().unwrap());
 
     let mut rng = rand::thread_rng();

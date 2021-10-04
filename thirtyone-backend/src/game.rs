@@ -1,6 +1,6 @@
 use futures_util::stream::SplitSink;
 use futures_util::SinkExt;
-use log::{debug, error, trace};
+use log::{debug, trace};
 use tokio::net::TcpStream;
 use tokio::sync::mpsc::UnboundedReceiver;
 use tokio_tungstenite::tungstenite::Message;
@@ -69,13 +69,13 @@ pub async fn listen(mut players: [GameSession; 2], mut game_rx: UnboundedReceive
                     );
                     continue;
                 }
+                counter[index as usize] = new_value;
                 trace!(
                     "[{}] new counter: [{}, {}]",
                     game_id,
                     counter[0],
                     counter[1]
                 );
-                counter[index as usize] = new_value;
                 let update_counter = ClientBound::UpdateCounter {
                     counter: counter.clone(),
                 };

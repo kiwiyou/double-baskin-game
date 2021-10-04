@@ -1,6 +1,5 @@
 import { assign, createMachine, forwardTo, send } from 'xstate'
 import { User } from '../common/User'
-import { GAME_HOST } from '../const'
 
 type GameContext = {
   user: User
@@ -13,7 +12,7 @@ type GameContext = {
 export const gameMachine = createMachine<GameContext>({
   context: {
     user: undefined!,
-    host: GAME_HOST,
+    host: undefined!,
   },
   id: 'baskin',
   initial: 'idle',
