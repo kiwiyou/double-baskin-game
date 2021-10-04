@@ -16,10 +16,10 @@ jobs:
           toolchain: stable
           target: aarch64-unknown-linux-gnu
           override: true
-      - run: cd thirtyone-backend
       - uses: actions-rs/cargo@v1
         with:
           use-cross: true
+          working-directory: ./thirtyone-backend
           command: build
           args: --target aarch64-unknown-linux-gnu
   frontend:
@@ -27,10 +27,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - run: cd thirtyone-frontend
       - uses: actions/setup-node@v2
         with:
           node-version: '14'
           cache: 'npm'
+          cache-dependency-path: thirtyone-frontend/package-lock.json
       - run: npm install
+        working-directory: ./thirtyone-frontend
       - run: npm build
+        working-directory: ./thirtyone-frontend
