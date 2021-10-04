@@ -20,13 +20,21 @@ export const GamePage = ({ user }: GamePageProps) => {
       return <h1>상대를 찾는 중입니다...</h1>
     case state.matches({ game: { in_game: 'my_turn' } }):
       return (
-        <CounterControl
-          counter={state.context.counter!}
-          onTurnPass={(index, delta) => send('INCREASE', { index, delta })}
-        />
+        <div>
+          <h1>{user.nickname}님 차례입니다.</h1>
+          <CounterControl
+            counter={state.context.counter!}
+            onTurnPass={(index, delta) => send('INCREASE', { index, delta })}
+          />
+        </div>
       )
     case state.matches({ game: { in_game: 'other_turn' } }):
-      return <h1>{state.context.opponent}님 차례입니다.</h1>
+      return (
+        <div>
+          <h1>{state.context.opponent}님 차례입니다.</h1>
+          <CounterControl counter={state.context.counter!} disabled />
+        </div>
+      )
     case state.matches({ game: 'win' }):
       return (
         <div>

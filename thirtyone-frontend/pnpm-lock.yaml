@@ -8,12 +8,10 @@ specifiers:
   '@typescript-eslint/eslint-plugin': ^4.32.0
   '@typescript-eslint/parser': ^4.32.0
   '@vitejs/plugin-react': ^1.0.0
-  '@xstate/inspect': ^0.5.0
   '@xstate/react': ^1.6.1
   eslint: ^7.32.0
   eslint-config-prettier: ^8.3.0
   eslint-plugin-react: ^7.26.1
-  jotai: ^1.3.7
   prettier: ^2.4.1
   react: ^17.0.0
   react-dom: ^17.0.0
@@ -23,9 +21,7 @@ specifiers:
 
 dependencies:
   '@emotion/css': 11.1.3
-  '@xstate/inspect': 0.5.0
   '@xstate/react': 1.6.1_0d95e973bc47a152c3ab5d6320d232c6
-  jotai: 1.3.7_react@17.0.2+xstate@4.25.0
   react: 17.0.2
   react-dom: 17.0.2_react@17.0.2
   xstate: 4.25.0
@@ -650,14 +646,6 @@ packages:
     transitivePeerDependencies:
       - supports-color
     dev: true
-
-  /@xstate/inspect/0.5.0:
-    resolution: {integrity: sha512-AOCK513vmueAAM6bQCPrvlPdHaMH3X7AgvVr0pAYzFHvV2SBhPZCX9TQXRrOmIplqByRjb34puPUbYRjkmLHww==}
-    peerDependencies:
-      ws: ^7.3.1
-    dependencies:
-      fast-safe-stringify: 2.1.1
-    dev: false
 
   /@xstate/react/1.6.1_0d95e973bc47a152c3ab5d6320d232c6:
     resolution: {integrity: sha512-M3b32nGhA0K3N6NrYKAMXx3dgGlLmuZfJU/EsZT04kQyVbWSiT3z7p9rdPisQyaQYFUwdqspQZ68wRNWbUkfVQ==}
@@ -1341,10 +1329,6 @@ packages:
     resolution: {integrity: sha1-PYpcZog6FqMMqGQ+hR8Zuqd5eRc=}
     dev: true
 
-  /fast-safe-stringify/2.1.1:
-    resolution: {integrity: sha512-W+KJc2dmILlPplD/H4K9l9LcAHAfPtP6BY84uVLXQ6Evcz9Lcg33Y2z1IVblT6xdY54PXYVHEv+0Wpq8Io6zkA==}
-    dev: false
-
   /fastq/1.13.0:
     resolution: {integrity: sha512-YpkpUnK8od0o1hmeSc7UUs/eB/vIPWJYjKck2QKIzAf71Vm1AAQ3EbuZB3g2JIy+pg+ERD0vqI79KyZiB2e2Nw==}
     dependencies:
@@ -1640,44 +1624,6 @@ packages:
   /isexe/2.0.0:
     resolution: {integrity: sha1-6PvzdNxVb/iUehDcsFctYz8s+hA=}
     dev: true
-
-  /jotai/1.3.7_react@17.0.2+xstate@4.25.0:
-    resolution: {integrity: sha512-vLs/7CpXZy11REfeHaEUaXe3oqY9O0YwUAHUI/mph2Lujw4YqtyRk8r5qo0vq10nA9rESWHO+ky84Bf+lRG1lg==}
-    engines: {node: '>=12.7.0'}
-    peerDependencies:
-      '@babel/core': '*'
-      '@babel/template': '*'
-      '@urql/core': '*'
-      immer: '*'
-      optics-ts: '*'
-      react: '>=16.8'
-      react-query: '*'
-      valtio: '*'
-      wonka: '*'
-      xstate: '*'
-    peerDependenciesMeta:
-      '@babel/core':
-        optional: true
-      '@babel/template':
-        optional: true
-      '@urql/core':
-        optional: true
-      immer:
-        optional: true
-      optics-ts:
-        optional: true
-      react-query:
-        optional: true
-      valtio:
-        optional: true
-      wonka:
-        optional: true
-      xstate:
-        optional: true
-    dependencies:
-      react: 17.0.2
-      xstate: 4.25.0
-    dev: false
 
   /js-tokens/4.0.0:
     resolution: {integrity: sha512-RdJUflcE3cUzKiMqQgsCu06FPu9UdIJO0beYbPhHN4k6apgJtifcoCtT9bcxOpYBtpD2kCM6Sbzg4CausW/PKQ==}

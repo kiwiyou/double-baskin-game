@@ -1,5 +1,6 @@
 import { assign, createMachine, forwardTo, send } from 'xstate'
 import { User } from '../common/User'
+import { GAME_HOST } from '../const'
 
 type GameContext = {
   user: User
@@ -12,7 +13,7 @@ type GameContext = {
 export const gameMachine = createMachine<GameContext>({
   context: {
     user: undefined!,
-    host: 'ws://127.0.0.1:8080',
+    host: GAME_HOST,
   },
   id: 'baskin',
   initial: 'idle',
@@ -96,6 +97,7 @@ export const gameMachine = createMachine<GameContext>({
           onReceive((e) => {
             switch (e.type) {
               case 'INCREASE':
+                console.log(e.index, e.delta)
                 sendPacket({
                   type: 'increase',
                   index: e.index,
@@ -128,7 +130,6 @@ export const gameMachine = createMachine<GameContext>({
           })
 
           ws.addEventListener('message', (e) => {
-            console.log(e.data)
             if (typeof e.data === 'string') {
               const data: ClientBound = JSON.parse(e.data)
               switch (data.type) {
