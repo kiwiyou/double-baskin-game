@@ -9,7 +9,7 @@ use tokio_tungstenite::WebSocketStream;
 
 use crate::game::GameRequest;
 use crate::matcher::{MatcherRequest, MatchingSession};
-use crate::proto::{Hello, Increase};
+use crate::proto::{Hello, InGame};
 
 pub async fn handshake(
     id: u32,
@@ -17,26 +17,24 @@ pub async fn handshake(
     stream: WebSocketStream<TcpStream>,
 ) {
     let (ws_tx, mut ws_rx) = stream.split();
-    if let Some(message) = ws_rx.next().await {
-        if let Ok(message) = message {
-            if let Some(message) = message
-                .to_text()
-                .ok()
-                .and_then(|text| serde_json::from_str::<'_, Hello>(text).ok())
-            {
-                let (match_tx, match_rx) = oneshot::channel();
-                let enqueue = MatcherRequest::Enqueue(MatchingSession {
-                    id,
-                    name: message.name.to_string(),
-                    sender: ws_tx,
-                    notifier: match_tx,
-                });
-                if let Err(e) = matcher_tx.send(enqueue) {
-                    error!("[#{}] failed to queue client: {}", id, e);
-                } else {
-                    tokio::spawn(wait_match(id, match_rx, matcher_tx, ws_rx));
-                    return;
-                }
+    if let Some(Ok(message)) = ws_rx.next().await {
+        if let Some(message) = message
+            .to_text()
+            .ok()
+            .and_then(|text| serde_json::from_str::<'_, Hello>(text).ok())
+        {
+            let (match_tx, match_rx) = oneshot::channel();
+            let enqueue = MatcherRequest::Enqueue(MatchingSession {
+                id,
+                name: message.name.to_string(),
+                sender: ws_tx,
+                notifier: match_tx,
+            });
+            if let Err(e) = matcher_tx.send(enqueue) {
+                error!("[#{}] failed to queue client: {}", id, e);
+            } else {
+                tokio::spawn(wait_match(id, match_rx, matcher_tx, ws_rx));
+                return;
             }
         }
     }
@@ -89,12 +87,20 @@ pub async fn run_game(
     while let Some(message) = stream.next().await {
         match message {
             Ok(Message::Text(text)) => {
-                if let Ok(increase) = serde_json::from_str::<'_, Increase>(&text) {
-                    if let Err(e) = game_tx.send(GameRequest::Increase {
-                        id,
-                        index: increase.index,
-                        delta: increase.delta,
-                    }) {
+                if let Ok(increase) = serde_json::from_str::<'_, InGame>(&text) {
+                    let request = match increase {
+                        InGame::Delta { index, delta } => GameRequest::Delta {
+                            from: id,
+                            index: index as usize,
+                            delta,
+                        },
+                        InGame::Pass { index, delta } => GameRequest::Pass {
+                            from: id,
+                            index: index as usize,
+                            delta,
+                        },
+                    };
+                    if let Err(e) = game_tx.send(request) {
                         error!("[#{}] failed to relay game packet: {}", id, e);
                         break;
                     }

@@ -8,7 +8,8 @@ use tokio_tungstenite::WebSocketStream;
 
 pub enum GameRequest {
     Quit(u32),
-    Increase { id: u32, index: u8, delta: u8 },
+    Delta { from: u32, index: usize, delta: u8 },
+    Pass { from: u32, index: usize, delta: u8 },
 }
 
 pub struct GameSession {
@@ -23,6 +24,7 @@ pub async fn listen(mut players: [GameSession; 2], mut game_rx: UnboundedReceive
     debug!("[{}] new game", game_id);
     while let Some(request) = game_rx.recv().await {
         match request {
+            // Responsible for dropping IO-errored clients
             GameRequest::Quit(id) => {
                 if id == players[0].id {
                     debug!("[{}] player {} quit", game_id, players[0].id);
@@ -44,68 +46,116 @@ pub async fn listen(mut players: [GameSession; 2], mut game_rx: UnboundedReceive
                     break;
                 }
             }
-            // Assume no remote io error, wait for process on Quit event
-            GameRequest::Increase { id, index, delta } => {
-                if id != players[turn].id {
-                    debug!("[{}] increase from not-current player #{}", game_id, id);
+            GameRequest::Delta { from, index, delta } => {
+                if from != players[turn].id {
+                    debug!("[{}] delta from not-current player #{}", game_id, from);
                     continue;
                 }
-                if !(0..2).contains(&index) {
-                    debug!(
-                        "[{}] invalid increase index {} from #{}",
-                        game_id, index, id
-                    );
+                match is_delta_valid(index, delta, &counter, false) {
+                    DeltaValidity::Valid(_) => {
+                        let delta_message = ClientBound::Delta {
+                            index: index as u8,
+                            delta,
+                        };
+                        for player in &mut players {
+                            player.sender.send(delta_message.to_message()).await.ok();
+                        }
+                    }
+                    DeltaValidity::IndexOutOfRange => {
+                        debug!(
+                            "[{}] invalid increase index {} from #{}",
+                            game_id, index, from
+                        );
+                    }
+                    DeltaValidity::DeltaOutOfRange => {
+                        debug!(
+                            "[{}] delta not in [0, 3]: {} from #{}",
+                            game_id, delta, from
+                        );
+                    }
+                    DeltaValidity::CounterOutOfRange(new_counter) => {
+                        debug!(
+                            "[{}] new counter value not in [0, 31]: {} from #{}",
+                            game_id, new_counter, from
+                        );
+                    }
                 }
-                if !(1..=3).contains(&delta) {
-                    debug!("[{}] delta not in [1, 3]: {} from #{}", game_id, delta, id);
-                    continue;
-                }
-                // counter in [0, 31] and delta in [1, 3], so never overflows
-                let new_value = counter[index as usize] + delta;
-                if !(1..=31).contains(&new_value) {
-                    debug!(
-                        "[{}] new counter value not in [1, 31]: {} from #{}",
-                        game_id, new_value, id
-                    );
-                    continue;
-                }
-                counter[index as usize] = new_value;
-                trace!(
-                    "[{}] new counter: [{}, {}]",
-                    game_id,
-                    counter[0],
-                    counter[1]
-                );
-                let update_counter = ClientBound::UpdateCounter {
-                    counter: counter.clone(),
-                };
-                players[0]
-                    .sender
-                    .send(update_counter.to_message())
-                    .await
-                    .ok();
-                players[1]
-                    .sender
-                    .send(update_counter.to_message())
-                    .await
-                    .ok();
-
-                if counter[0] >= 31 && counter[1] >= 31 {
-                    players[turn]
-                        .sender
-                        .send(ClientBound::Lose.to_message())
-                        .await
-                        .ok();
-                    players[1 - turn]
-                        .sender
-                        .send(ClientBound::Win { quit: false }.to_message())
-                        .await
-                        .ok();
-                    break;
-                }
-
-                turn = (turn + 1) % players.len();
             }
+            GameRequest::Pass { from, index, delta } => {
+                if from != players[turn].id {
+                    debug!("[{}] pass from not-current player #{}", game_id, from);
+                    continue;
+                }
+                match is_delta_valid(index, delta, &counter, true) {
+                    DeltaValidity::Valid(new_counter) => {
+                        counter[index] = new_counter;
+                        trace!(
+                            "[{}] new counter: [{}, {}]",
+                            game_id,
+                            counter[0],
+                            counter[1]
+                        );
+                        let next_turn = (turn + 1) % 2;
+                        if counter[0] >= 31 && counter[1] >= 31 {
+                            players[turn]
+                                .sender
+                                .send(ClientBound::Lose.to_message())
+                                .await
+                                .ok();
+                            players[next_turn]
+                                .sender
+                                .send(ClientBound::Win { quit: false }.to_message())
+                                .await
+                                .ok();
+                        } else {
+                            let pass = ClientBound::Pass { counter };
+                            for player in &mut players {
+                                player.sender.send(pass.to_message()).await.ok();
+                            }
+                            turn = next_turn;
+                        }
+                    }
+                    DeltaValidity::IndexOutOfRange => {
+                        debug!(
+                            "[{}] invalid increase index {} from #{}",
+                            game_id, index, from
+                        );
+                    }
+                    DeltaValidity::DeltaOutOfRange => {
+                        debug!(
+                            "[{}] delta not in [1, 3]: {} from #{}",
+                            game_id, delta, from
+                        );
+                    }
+                    DeltaValidity::CounterOutOfRange(new_counter) => {
+                        debug!(
+                            "[{}] new counter value not in [0, 31]: {} from #{}",
+                            game_id, new_counter, from
+                        );
+                    }
+                }
+            }
+        }
+    }
+}
+
+enum DeltaValidity {
+    Valid(u8),
+    IndexOutOfRange,
+    DeltaOutOfRange,
+    CounterOutOfRange(u8),
+}
+fn is_delta_valid(index: usize, delta: u8, counter: &[u8; 2], is_commit: bool) -> DeltaValidity {
+    if !(0..2).contains(&index) {
+        DeltaValidity::IndexOutOfRange
+    } else if (is_commit && delta == 0) || !(0..=3).contains(&delta) {
+        DeltaValidity::DeltaOutOfRange
+    } else {
+        let new_counter = counter[index] + delta;
+        if !(0..=31).contains(&new_counter) {
+            DeltaValidity::CounterOutOfRange(new_counter)
+        } else {
+            DeltaValidity::Valid(new_counter)
         }
     }
 }

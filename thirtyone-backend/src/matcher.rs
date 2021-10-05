@@ -56,12 +56,12 @@ pub async fn listen(mut rx: UnboundedReceiver<MatcherRequest>) {
                 } else {
                     let mut a = players.pop().unwrap();
                     let mut b = players.pop().unwrap();
-                    let new_match_a = ClientBound::NewMatch {
+                    let new_match_a = ClientBound::Match {
                         opponent: &b.name,
                         is_turn: true,
                     }
                     .to_message();
-                    let new_match_b = ClientBound::NewMatch {
+                    let new_match_b = ClientBound::Match {
                         opponent: &a.name,
                         is_turn: false,
                     }

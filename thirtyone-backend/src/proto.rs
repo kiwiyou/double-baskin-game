@@ -7,16 +7,18 @@ pub struct Hello<'a> {
 }
 
 #[derive(Deserialize)]
-pub struct Increase {
-    pub index: u8,
-    pub delta: u8,
+#[serde(tag = "type", rename_all = "snake_case")]
+pub enum InGame {
+    Delta { index: u8, delta: u8 },
+    Pass { index: u8, delta: u8 },
 }
 
 #[derive(Serialize)]
 #[serde(tag = "type", rename_all = "snake_case")]
 pub enum ClientBound<'a> {
-    NewMatch { opponent: &'a str, is_turn: bool },
-    UpdateCounter { counter: [u8; 2] },
+    Match { opponent: &'a str, is_turn: bool },
+    Delta { index: u8, delta: u8 },
+    Pass { counter: [u8; 2] },
     Win { quit: bool },
     Lose,
 }

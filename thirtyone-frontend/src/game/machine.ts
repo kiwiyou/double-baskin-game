@@ -1,5 +1,6 @@
 import { assign, createMachine, forwardTo, send } from 'xstate'
 import { User } from '../common/User'
+import { ClientBound } from './packet'
 
 type GameContext = {
   user: User
@@ -7,6 +8,8 @@ type GameContext = {
   opponent?: undefined
   quit?: boolean
   counter?: [number, number]
+  index?: number
+  delta?: number
 }
 
 export const gameMachine = createMachine<GameContext>({
@@ -42,6 +45,8 @@ export const gameMachine = createMachine<GameContext>({
                 actions: assign({
                   opponent: (c, e) => e.opponent,
                   counter: (c, e) => [0, 0],
+                  index: (c, e) => undefined,
+                  delta: (c, e) => 0,
                 }),
               },
               {
@@ -49,6 +54,8 @@ export const gameMachine = createMachine<GameContext>({
                 actions: assign({
                   opponent: (c, e) => e.opponent,
                   counter: (c, e) => [0, 0],
+                  index: (c, e) => undefined,
+                  delta: (c, e) => 0,
                 }),
               },
             ],
@@ -61,9 +68,16 @@ export const gameMachine = createMachine<GameContext>({
               on: {
                 UPDATE_COUNTER: {
                   target: 'other_turn',
-                  actions: assign({ counter: (c, e) => e.counter }),
+                  actions: assign({
+                    counter: (c, e) => e.counter,
+                    index: (c, e) => undefined,
+                    delta: (c, e) => 0,
+                  }),
                 },
-                INCREASE: {
+                PASS: {
+                  actions: forwardTo('socket'),
+                },
+                DELTA: {
                   actions: forwardTo('socket'),
                 },
               },
@@ -72,12 +86,22 @@ export const gameMachine = createMachine<GameContext>({
               on: {
                 UPDATE_COUNTER: {
                   target: 'my_turn',
-                  actions: assign({ counter: (c, e) => e.counter }),
+                  actions: assign({
+                    counter: (c, e) => e.counter,
+                    index: (c, e) => undefined,
+                    delta: (c, e) => 0,
+                  }),
                 },
               },
             },
           },
           on: {
+            UPDATE_DELTA: {
+              actions: assign({
+                index: (c, e) => e.index,
+                delta: (c, e) => e.delta,
+              }),
+            },
             CLOSED: 'disconnected',
             WIN: {
               target: 'win',
@@ -95,10 +119,16 @@ export const gameMachine = createMachine<GameContext>({
         src: (context, event) => (callback, onReceive) => {
           onReceive((e) => {
             switch (e.type) {
-              case 'INCREASE':
-                console.log(e.index, e.delta)
+              case 'PASS':
                 sendPacket({
-                  type: 'increase',
+                  type: 'pass',
+                  index: e.index,
+                  delta: e.delta,
+                })
+                break
+              case 'DELTA':
+                sendPacket({
+                  type: 'delta',
                   index: e.index,
                   delta: e.delta,
                 })
@@ -132,14 +162,22 @@ export const gameMachine = createMachine<GameContext>({
             if (typeof e.data === 'string') {
               const data: ClientBound = JSON.parse(e.data)
               switch (data.type) {
-                case 'new_match':
+                case 'match':
                   callback({
                     type: 'NEW_MATCH',
                     opponent: data.opponent,
                     is_turn: data.is_turn,
                   })
                   break
-                case 'update_counter':
+                case 'delta':
+                  console.log('update_delta')
+                  callback({
+                    type: 'UPDATE_DELTA',
+                    index: data.index,
+                    delta: data.delta,
+                  })
+                  break
+                case 'pass':
                   callback({
                     type: 'UPDATE_COUNTER',
                     counter: data.counter,
@@ -159,29 +197,3 @@ export const gameMachine = createMachine<GameContext>({
     },
   },
 })
-
-interface Packet {
-  type: string
-}
-
-interface NewMatchPacket extends Packet {
-  type: 'new_match'
-  opponent: string
-  is_turn: boolean
-}
-
-interface UpdateCounterPacket extends Packet {
-  type: 'update_counter'
-  counter: [number, number]
-}
-
-interface WinPacket extends Packet {
-  type: 'win'
-  quit: boolean
-}
-
-interface LosePacket extends Packet {
-  type: 'lose'
-}
-
-type ClientBound = NewMatchPacket | UpdateCounterPacket | WinPacket | LosePacket
