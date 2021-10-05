@@ -10,11 +10,19 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+      - uses: Swatinem/rust-cache@v1
+        with:
+          working-directory: thirtyone-backend
       - name: Install cross
         run: cargo install cross
       - name: Build
-        working-directory: ./thirtyone-backend
+        working-directory: thirtyone-backend
         run: cross build --target aarch64-unknown-linux-gnu
+      - name: Archive backend artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: thirytone-backend
+          path: thirtyone-backend/target/aarch64-unknown-linux-gnu/release/thirtyone-backend
   frontend:
     name: Frontend
     runs-on: ubuntu-latest
@@ -23,7 +31,18 @@ jobs:
       - uses: actions/setup-node@v2
         with:
           node-version: '14'
+      - uses: actions/cache@v2
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
       - run: npm install
-        working-directory: ./thirtyone-frontend
+        working-directory: thirtyone-frontend
       - run: npm run build
-        working-directory: ./thirtyone-frontend
+        working-directory: thirtyone-frontend
+      - name: Archive frontend artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: thirytone-frontend
+          path: thirtyone-frontend/dist
