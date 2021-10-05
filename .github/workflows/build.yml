@@ -21,7 +21,7 @@ jobs:
       - name: Archive backend artifact
         uses: actions/upload-artifact@v2
         with:
-          name: thirytone-backend
+          name: thirtyone-backend
           path: thirtyone-backend/target/aarch64-unknown-linux-gnu/release/thirtyone-backend
   frontend:
     name: Frontend
@@ -44,5 +44,5 @@ jobs:
       - name: Archive frontend artifact
         uses: actions/upload-artifact@v2
         with:
-          name: thirytone-frontend
+          name: thirtyone-frontend
           path: thirtyone-frontend/dist
