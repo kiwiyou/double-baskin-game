@@ -9,10 +9,6 @@ export interface CounterControlProps {
   onTurnPass?: () => void
 }
 
-const hiddenStyle = css`
-  visibility: hidden;
-`
-
 const counterStyle = css`
   font-size: 5rem;
   font-variant-numeric: tabular-nums;
@@ -24,7 +20,7 @@ const grid = css`
   display: grid;
   grid-template-columns: 1fr 1fr;
   justify-items: center;
-  row-gap: 2rem;
+  gap: 2rem;
 `
 
 export const CounterControl = ({

@@ -96,6 +96,10 @@ pub async fn listen(mut players: [GameSession; 2], mut game_rx: UnboundedReceive
                             counter[1]
                         );
                         let next_turn = (turn + 1) % 2;
+                        let pass = ClientBound::Pass { counter };
+                        for player in &mut players {
+                            player.sender.send(pass.to_message()).await.ok();
+                        }
                         if counter[0] >= 31 && counter[1] >= 31 {
                             players[turn]
                                 .sender
@@ -107,13 +111,8 @@ pub async fn listen(mut players: [GameSession; 2], mut game_rx: UnboundedReceive
                                 .send(ClientBound::Win { quit: false }.to_message())
                                 .await
                                 .ok();
-                        } else {
-                            let pass = ClientBound::Pass { counter };
-                            for player in &mut players {
-                                player.sender.send(pass.to_message()).await.ok();
-                            }
-                            turn = next_turn;
                         }
+                        turn = next_turn;
                     }
                     DeltaValidity::IndexOutOfRange => {
                         debug!(

@@ -6,29 +6,17 @@ import { User } from '../common/User'
 import { CounterControl } from './CounterControl'
 import { gameMachine } from './machine'
 import { BeatLoader } from 'react-spinners'
+import { centeredFlex } from '../common/Center'
 
 export interface GamePageProps {
   user: User
 }
 
-const centered = css`
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  transform: translate(-50%, -50%);
-`
-
-const centeredFlex = css`
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-`
-
 export const GamePage = ({ user }: GamePageProps) => {
   const [state, send] = useMachine(gameMachine, {
     context: {
       user,
-      host: `wss://${/*window.location.host*/ 'thirtyone.kiwiyou.dev'}/server`,
+      host: `wss://${window.location.host}/server`,
     },
   })
   const onDelta = useCallback(
@@ -55,7 +43,6 @@ export const GamePage = ({ user }: GamePageProps) => {
       return (
         <div
           className={cx(
-            centered,
             centeredFlex,
             css`
               & > * {
@@ -72,7 +59,6 @@ export const GamePage = ({ user }: GamePageProps) => {
       return (
         <div
           className={cx(
-            centered,
             centeredFlex,
             css`
               & > * {
@@ -93,7 +79,7 @@ export const GamePage = ({ user }: GamePageProps) => {
           (state.context.index === 1 ? state.context.delta! : 0),
       ]
       return (
-        <div className={cx(centered, centeredFlex)}>
+        <div className={centeredFlex}>
           <h1>{user.nickname}님 차례입니다.</h1>
           <CounterControl
             counter={actualCounter}
@@ -111,7 +97,7 @@ export const GamePage = ({ user }: GamePageProps) => {
           (state.context.index === 1 ? state.context.delta! : 0),
       ]
       return (
-        <div className={cx(centered, centeredFlex)}>
+        <div className={centeredFlex}>
           <h1>{state.context.opponent}님 차례입니다.</h1>
           <CounterControl counter={actualCounter} disabled />
         </div>
@@ -119,7 +105,7 @@ export const GamePage = ({ user }: GamePageProps) => {
     }
     case state.matches('win'):
       return (
-        <div className={cx(centered, centeredFlex)}>
+        <div className={centeredFlex}>
           <h1>승리!</h1>
           <CounterControl counter={state.context.counter!} disabled />
           <Button onClick={backToMatch}>다시 매칭하기</Button>
@@ -127,7 +113,7 @@ export const GamePage = ({ user }: GamePageProps) => {
       )
     case state.matches('lose'):
       return (
-        <div className={cx(centered, centeredFlex)}>
+        <div className={centeredFlex}>
           <h1>패배!</h1>
           <CounterControl counter={state.context.counter!} disabled />
           <Button onClick={backToMatch}>다시 매칭하기</Button>
@@ -135,8 +121,14 @@ export const GamePage = ({ user }: GamePageProps) => {
       )
     case state.matches('disconnected'):
       return (
-        <div className={cx(centered, centeredFlex)}>
-          <div>서버와의 연결이 끊어졌습니다.</div>
+        <div className={centeredFlex}>
+          <div
+            className={css`
+              margin-bottom: 1rem;
+            `}
+          >
+            서버와의 연결이 끊어졌습니다.
+          </div>
           <Button onClick={backToMatch}>다시 매칭하기</Button>
         </div>
       )

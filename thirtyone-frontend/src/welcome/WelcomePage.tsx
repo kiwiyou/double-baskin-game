@@ -1,4 +1,5 @@
-import { css } from '@emotion/css'
+import { css, cx } from '@emotion/css'
+import { centeredFlex } from '../common/Center'
 import { JoinForm, JoinFormProps } from './JoinForm'
 
 const containerStyle = css`
@@ -19,7 +20,7 @@ export interface WelcomeProps extends JoinFormProps {}
 
 export const WelcomePage = (props: WelcomeProps) => {
   return (
-    <div className={containerStyle}>
+    <div className={cx(centeredFlex, containerStyle)}>
       <div className={titleStyle}>
         <div />
         <div>더</div>
