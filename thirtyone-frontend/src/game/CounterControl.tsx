@@ -1,5 +1,6 @@
 import { css } from '@emotion/css'
 import { useCallback } from 'react'
+import { Button } from '../common/Button'
 
 export interface CounterControlProps {
   counter: [number, number]
@@ -7,6 +8,17 @@ export interface CounterControlProps {
   onDelta?: (index: number, delta: number) => void
   onTurnPass?: () => void
 }
+
+const hiddenStyle = css`
+  visibility: hidden;
+`
+
+const counterStyle = css`
+  font-size: 5rem;
+  font-variant-numeric: tabular-nums;
+  font-style: italic;
+  font-weight: 700;
+`
 
 const grid = css`
   display: grid;
@@ -32,29 +44,48 @@ export const CounterControl = ({
 
   return (
     <div className={grid}>
-      <button disabled={disabled} onClick={increaseCallback[0]}>
+      <Button
+        invisible={disabled}
+        disabled={disabled}
+        onClick={increaseCallback[0]}
+      >
         증가
-      </button>
-      <button disabled={disabled} onClick={increaseCallback[1]}>
+      </Button>
+      <Button
+        invisible={disabled}
+        disabled={disabled}
+        onClick={increaseCallback[1]}
+      >
         증가
-      </button>
-      <div>{counter[0]}</div>
-      <div>{counter[1]}</div>
-      <button disabled={disabled} onClick={decreaseCallback[0]}>
+      </Button>
+      <div className={counterStyle}>{counter[0]}</div>
+      <div className={counterStyle}>{counter[1]}</div>
+      <Button
+        invisible={disabled}
+        disabled={disabled}
+        onClick={decreaseCallback[0]}
+      >
         감소
-      </button>
-      <button disabled={disabled} onClick={decreaseCallback[1]}>
+      </Button>
+      <Button
+        invisible={disabled}
+        disabled={disabled}
+        onClick={decreaseCallback[1]}
+      >
         감소
-      </button>
-      <button
+      </Button>
+      <Button
         className={css`
           grid-column-end: span 2;
+          font-size: 1.5rem;
+          padding: 1rem 1.5rem;
         `}
+        invisible={disabled}
         disabled={disabled}
         onClick={onTurnPass}
       >
         차례 넘기기
-      </button>
+      </Button>
     </div>
   )
 }

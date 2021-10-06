@@ -1,5 +1,24 @@
+import { css } from '@emotion/css'
 import { useState, UIEvent } from 'react'
+import { Button } from '../common/Button'
+import { Input } from '../common/Input'
 import { User } from '../common/User'
+
+const formStyle = css`
+  width: 15rem;
+  display: flex;
+  font-size: 1rem;
+  flex-direction: column;
+  & > * {
+    margin: 0.5rem 0;
+  }
+  margin-top: 2rem;
+`
+
+const errorStyle = css`
+  color: red;
+  text-align: center;
+`
 
 export interface JoinFormProps {
   onUserCreate?: (user: User) => void
@@ -39,19 +58,19 @@ export const JoinForm = ({ onUserCreate }: JoinFormProps) => {
     ) : undefined
 
   return (
-    <form>
-      <h1>게임에서 사용할 별명을 입력해주세요.</h1>
-      <input
+    <form className={formStyle}>
+      <Input
         id="nickname"
         name="nickname"
         placeholder="별명"
         maxLength={20}
         onChange={(e) => setNickname(e.target.value)}
+        wrong={nickError !== undefined}
       />
-      {errorLabel}
-      <button type="submit" onClick={onConfirm}>
-        확인
-      </button>
+      <div className={errorStyle}>{errorLabel}</div>
+      <Button type="submit" onClick={onConfirm}>
+        게임 시작하기
+      </Button>
     </form>
   )
 }

@@ -1,19 +1,34 @@
+import { css, cx } from '@emotion/css'
 import { useMachine } from '@xstate/react'
 import { useCallback } from 'react'
+import { Button } from '../common/Button'
 import { User } from '../common/User'
 import { CounterControl } from './CounterControl'
-import { IdleScene } from './IdleScene'
 import { gameMachine } from './machine'
+import { BeatLoader } from 'react-spinners'
 
 export interface GamePageProps {
   user: User
 }
 
+const centered = css`
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+`
+
+const centeredFlex = css`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+`
+
 export const GamePage = ({ user }: GamePageProps) => {
   const [state, send] = useMachine(gameMachine, {
     context: {
       user,
-      host: `wss://${window.location.host}/server`,
+      host: `wss://${/*window.location.host*/ 'thirtyone.kiwiyou.dev'}/server`,
     },
   })
   const onDelta = useCallback(
@@ -33,15 +48,44 @@ export const GamePage = ({ user }: GamePageProps) => {
       }),
     [state.context]
   )
+  const backToMatch = useCallback(() => send('BACK_TO_MATCH'), [])
 
   switch (true) {
-    case state.matches('idle'):
-      return <IdleScene user={user} onMatch={() => send('TRY_MATCH')} />
-    case state.matches({ game: 'connecting' }):
-      return <h1>서버에 연결하는 중입니다...</h1>
-    case state.matches({ game: 'match_waiting' }):
-      return <h1>상대를 찾는 중입니다...</h1>
-    case state.matches({ game: { in_game: 'my_turn' } }): {
+    case state.matches('connecting'):
+      return (
+        <div
+          className={cx(
+            centered,
+            centeredFlex,
+            css`
+              & > * {
+                margin: 0.5rem 0;
+              }
+            `
+          )}
+        >
+          <BeatLoader color="white" loading />
+          <div>서버에 연결하는 중입니다...</div>
+        </div>
+      )
+    case state.matches('match_waiting'):
+      return (
+        <div
+          className={cx(
+            centered,
+            centeredFlex,
+            css`
+              & > * {
+                margin: 0.5rem 0;
+              }
+            `
+          )}
+        >
+          <BeatLoader color="white" loading />
+          <div>상대를 찾는 중입니다...</div>
+        </div>
+      )
+    case state.matches({ in_game: 'my_turn' }): {
       const actualCounter: [number, number] = [
         state.context.counter![0] +
           (state.context.index === 0 ? state.context.delta! : 0),
@@ -49,7 +93,7 @@ export const GamePage = ({ user }: GamePageProps) => {
           (state.context.index === 1 ? state.context.delta! : 0),
       ]
       return (
-        <div>
+        <div className={cx(centered, centeredFlex)}>
           <h1>{user.nickname}님 차례입니다.</h1>
           <CounterControl
             counter={actualCounter}
@@ -59,7 +103,7 @@ export const GamePage = ({ user }: GamePageProps) => {
         </div>
       )
     }
-    case state.matches({ game: { in_game: 'other_turn' } }): {
+    case state.matches({ in_game: 'other_turn' }): {
       const actualCounter: [number, number] = [
         state.context.counter![0] +
           (state.context.index === 0 ? state.context.delta! : 0),
@@ -67,31 +111,33 @@ export const GamePage = ({ user }: GamePageProps) => {
           (state.context.index === 1 ? state.context.delta! : 0),
       ]
       return (
-        <div>
+        <div className={cx(centered, centeredFlex)}>
           <h1>{state.context.opponent}님 차례입니다.</h1>
           <CounterControl counter={actualCounter} disabled />
         </div>
       )
     }
-    case state.matches({ game: 'win' }):
+    case state.matches('win'):
       return (
-        <div>
+        <div className={cx(centered, centeredFlex)}>
           <h1>승리!</h1>
-          <button onClick={() => send('BACK_IDLE')}>다시 매칭하기</button>
+          <CounterControl counter={state.context.counter!} disabled />
+          <Button onClick={backToMatch}>다시 매칭하기</Button>
         </div>
       )
-    case state.matches({ game: 'lose' }):
+    case state.matches('lose'):
       return (
-        <div>
+        <div className={cx(centered, centeredFlex)}>
           <h1>패배!</h1>
-          <button onClick={() => send('BACK_IDLE')}>다시 매칭하기</button>
+          <CounterControl counter={state.context.counter!} disabled />
+          <Button onClick={backToMatch}>다시 매칭하기</Button>
         </div>
       )
-    case state.matches({ game: 'disconnected' }):
+    case state.matches('disconnected'):
       return (
-        <div>
-          <h1>서버와의 연결이 끊어졌습니다.</h1>
-          <button onClick={() => send('BACK_IDLE')}>다시 매칭하기</button>
+        <div className={cx(centered, centeredFlex)}>
+          <div>서버와의 연결이 끊어졌습니다.</div>
+          <Button onClick={backToMatch}>다시 매칭하기</Button>
         </div>
       )
     default:
