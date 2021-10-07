@@ -12,11 +12,18 @@ export interface GamePageProps {
   user: User
 }
 
+const koreanHeader = css`
+  word-break: keep-all;
+  text-align: center;
+`
+
 export const GamePage = ({ user }: GamePageProps) => {
   const [state, send] = useMachine(gameMachine, {
     context: {
       user,
-      host: `wss://${window.location.host}/server`,
+      host: import.meta.env.PROD
+        ? `wss://${window.location.host}/server`
+        : (import.meta.env.VITE_WS_HOST as string),
     },
   })
   const onDelta = useCallback(
@@ -52,7 +59,7 @@ export const GamePage = ({ user }: GamePageProps) => {
           )}
         >
           <BeatLoader color="white" loading />
-          <div>서버에 연결하는 중입니다...</div>
+          <div className={koreanHeader}>서버에 연결하는 중입니다...</div>
         </div>
       )
     case state.matches('match_waiting'):
@@ -68,7 +75,7 @@ export const GamePage = ({ user }: GamePageProps) => {
           )}
         >
           <BeatLoader color="white" loading />
-          <div>상대를 찾는 중입니다...</div>
+          <div className={koreanHeader}>상대를 찾는 중입니다...</div>
         </div>
       )
     case state.matches({ in_game: 'my_turn' }): {
@@ -80,7 +87,7 @@ export const GamePage = ({ user }: GamePageProps) => {
       ]
       return (
         <div className={centeredFlex}>
-          <h1>{user.nickname}님 차례입니다.</h1>
+          <h1 className={koreanHeader}>{user.nickname}님 차례입니다.</h1>
           <CounterControl
             counter={actualCounter}
             onDelta={onDelta}
@@ -98,7 +105,9 @@ export const GamePage = ({ user }: GamePageProps) => {
       ]
       return (
         <div className={centeredFlex}>
-          <h1>{state.context.opponent}님 차례입니다.</h1>
+          <h1 className={koreanHeader}>
+            {state.context.opponent}님 차례입니다.
+          </h1>
           <CounterControl counter={actualCounter} disabled />
         </div>
       )
@@ -123,9 +132,12 @@ export const GamePage = ({ user }: GamePageProps) => {
       return (
         <div className={centeredFlex}>
           <div
-            className={css`
-              margin-bottom: 1rem;
-            `}
+            className={cx(
+              css`
+                margin-bottom: 1rem;
+              `,
+              koreanHeader
+            )}
           >
             서버와의 연결이 끊어졌습니다.
           </div>

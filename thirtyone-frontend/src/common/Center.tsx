@@ -8,4 +8,6 @@ export const centeredFlex = css`
   display: flex;
   flex-direction: column;
   align-items: center;
+  width: max-content;
+  max-width: calc(100% - 1rem);
 `
